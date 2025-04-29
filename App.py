@@ -2,11 +2,15 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 import time
+from gpiozero import AngularServo
 
 # Configuration
 MODEL_PATH = "my_model.pt"  # Path to YOLO model
 SOURCE = 0  # Source: 0 for USB camera, or path to video file (e.g., "testvid.mp4")
 CONF_THRESH = 0.5  # Confidence threshold for detections
+
+# Servo setup
+servo = AngularServo(14, min_angle=0, max_angle=180, min_pulse_width=0.0005, max_pulse_width=0.0025)
 
 # Load model
 model = YOLO(MODEL_PATH, task='detect')
@@ -40,6 +44,8 @@ while True:
     results = model(frame, verbose=False)
     detections = results[0].boxes
     object_count = 0
+    
+    servo.angle = 0
 
     # Draw detections
     for det in detections:
@@ -51,11 +57,14 @@ while True:
         class_idx = int(det.cls.item())
 
         if labels[class_idx] == 'red_cat':
-            print('left')
+            print('Angle = 60')
+            servo.angle = 60
         elif labels[class_idx] == 'yellow_cat':
-            print('right')
+            print('Angle = 120')
+            servo.angle = 120
         elif labels[class_idx] == 'green_cat':
-            print('straight')
+            print('Angle = 180')
+            servo.angle = 180
 
         color = colors[class_idx % len(colors)]
         cv2.rectangle(frame, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), color, 2)
